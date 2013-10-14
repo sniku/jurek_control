@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+"""Jurek's control.
+
+Usage:
+  jurek_control pump (--turn-on <seconds> | --turn-off)
+  jurek_control (-h | --help)
+  jurek_control (--version)
+
+"""
+
+from docopt import docopt
+import RPi.GPIO as GPIO
+import time, os, datetime
+
+
+class Pump(object):
+    PUMP_PIN = 15
+
+    def __init__(self):
+        self.pump_setup()
+       
+    def pump_setup(self):
+        GPIO.cleanup()
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setup(self.PUMP_PIN, GPIO.OUT)
+
+    def turn_on(self, seconds=None):
+        print datetime.datetime.now(), 'Turning pump on'
+        GPIO.output(self.PUMP_PIN, True)    
+        if seconds is not None:
+            time.sleep(seconds)
+            self.turn_off()
+    
+    def turn_off(self):
+        print datetime.datetime.now(), 'Turning pump off'
+        GPIO.output(self.PUMP_PIN, False)
+
+if __name__ == "__main__":
+    args = docopt(__doc__, version='Jurek control 0.1a')
+    if 'pump' in args:
+        pump = Pump()
+        if args['--turn-on'] is True:
+            pump.turn_on(seconds=int(args['<seconds>']))
+        if args['--turn-off'] is True:
+            pump.turn_off()
+
+
