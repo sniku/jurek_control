@@ -18,7 +18,7 @@ I plan to add an autmatic feeder and "weather station" for monitoring humidity a
       jurek_control (--version)
       
 
-Example **usage**:
+Example usage:
       
 ```shell
 root@raspberrypi:/home/pi# jurek_control status
@@ -31,6 +31,6 @@ root@raspberrypi:/home/pi# jurek_control pump --turn-on 10  # in seconds
  2013-11-19 14:26:22.474739 Turning pump off
 
 root@raspberrypi:/home/pi# jurek_control heater --turn-on 1  # in minutes
- 2013-11-19 14:27:14.478262 Turning pump on
- 2013-11-19 14:28:14.484139 Turning pump off
+ 2013-11-19 14:27:14.478262 Turning heater on
+ 2013-11-19 14:28:14.484139 Turning heater off
 ```
