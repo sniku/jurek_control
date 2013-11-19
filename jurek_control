@@ -1,8 +1,11 @@
 #!/usr/bin/env python
-"""Jurek's control.
+"""Jurek control.
 
 Usage:
-  jurek_control pump (--turn-on <seconds> | --turn-off)
+  jurek_control heater (--turn-on <minutes> | --turn-off | --status)
+  jurek_control pump (--turn-on <seconds> | --turn-off | --status)
+  jurek_control feeder (--turn-on <seconds> | --turn-off | --status)
+  jurek_control status
   jurek_control (-h | --help)
   jurek_control (--version)
 
@@ -36,13 +39,117 @@ class Pump(object):
         print datetime.datetime.now(), 'Turning pump off'
         GPIO.output(self.PUMP_PIN, False)
 
+    def status(self):
+        this_status = 'on' if GPIO.input(self.PUMP_PIN) else 'off'
+        print 'Pump is turned {0}'.format(this_status)
+
+class Feeder(object):
+    FEEDER_PIN = 7
+    LEFT       = 2.5
+    NEUTRAL    = 7.5
+    RIGHT      = 12.5
+
+    def __init__(self):
+        self.feeder_setup()
+
+    def turn_on(self, seconds=1):
+        print datetime.datetime.now(), 'Turning feeder on'
+        self.pin.start(self.LEFT)
+
+        for x in xrange(0, 10):
+            self.set_left()
+            self.set_neutral()
+            self.set_right()
+ 
+        self.turn_off()
+
+    def set_left(self):
+        print 'LEFT'
+        self.pin.ChangeDutyCycle(self.LEFT)
+        time.sleep(1.3)
+
+    def set_neutral(self):
+        print 'NEUTRAL'
+        self.pin.ChangeDutyCycle(self.NEUTRAL)
+        time.sleep(1.3)
+
+    def set_right(self):
+        print 'RIGHT'
+        self.pin.ChangeDutyCycle(self.RIGHT)
+        time.sleep(1.3)
+
+    def turn_off(self):
+        print datetime.datetime.now(), 'Turning feeder off'
+        self.pin.stop()
+
+    def feeder_setup(self):
+        GPIO.cleanup()
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setwarnings(False)
+        GPIO.setup(self.FEEDER_PIN, GPIO.OUT)
+        self.pin = GPIO.PWM(self.FEEDER_PIN, 50)
+        # self.set_neutral()
+
+    def status(self):
+        this_status = 'on' if GPIO.input(self.FEEDER_PIN) else 'off'
+        print 'Feeder is turned {0}'.format(this_status)
+
+class Heater(object):
+    HEATER_PIN = 23
+
+    def __init__(self):
+        self.heater_setup()
+       
+    def heater_setup(self):
+        GPIO.cleanup()
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setup(self.HEATER_PIN, GPIO.OUT)
+
+    def turn_on(self, minutes):
+        print datetime.datetime.now(), 'Turning heater on'
+        GPIO.output(self.HEATER_PIN, True)
+        time.sleep( int(minutes) * 60)
+        self.turn_off()
+    
+    def turn_off(self):
+        print datetime.datetime.now(), 'Turning heater off'
+        GPIO.output(self.HEATER_PIN, False)
+
+    def status(self):
+        this_status = 'on' if GPIO.input(self.HEATER_PIN) else 'off'
+        print 'Electric heater is turned {0}'.format(this_status)
+
 if __name__ == "__main__":
-    args = docopt(__doc__, version='Jurek control 0.1a')
-    if 'pump' in args:
+    args = docopt(__doc__, version='Jurek control 0.3a')
+
+    if args['pump'] is True:
         pump = Pump()
         if args['--turn-on'] is True:
             pump.turn_on(seconds=int(args['<seconds>']))
         if args['--turn-off'] is True:
             pump.turn_off()
+        if args['--status'] is True:
+            pump.status()
+    if args['feeder'] is True:
+        feeder = Feeder()
+        if args['--turn-on'] is True:
+            feeder.turn_on(seconds=int(args['<seconds>']))
+        if args['--turn-off'] is True:
+            feeder.turn_off()
+    if args['heater'] is True:
+        heater = Heater()
+        if args['--turn-on'] is True:
+            heater.turn_on(minutes=int(args['<minutes>']))
+        if args['--turn-off'] is True:
+            heater.turn_off()
+    if args['status'] is True:
+        pump = Pump()
+        pump.status()
 
+        heater = Heater()
+        heater.status()
+
+        feeder = Feeder()
+        feeder.status()
 
