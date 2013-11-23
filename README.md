@@ -10,13 +10,13 @@ At the moment there is only one water-pump connected to the Pi that sprinkles wa
 I plan to add an autmatic feeder and "weather station" for monitoring humidity and temperature.
 
     Usage:
-      jurek_control heater (--turn-on <minutes> | --turn-off | --status)
-      jurek_control pump (--turn-on <seconds> | --turn-off | --status)
-      jurek_control feeder (--turn-on <seconds> | --turn-off | --status)
-      jurek_control status
-      jurek_control (-h | --help)
-      jurek_control (--version)
-      
+     jurek_control heater (--turn-on <minutes> | --turn-off | --status)
+     jurek_control pump (--turn-on <seconds> | --turn-off | --status)
+     jurek_control feeder (--turn-on <seconds> | --turn-off | --status)
+     jurek_control weather_station (--read | --update-spreadsheet)
+     jurek_control status
+     jurek_control (-h | --help)
+     jurek_control (--version)
 
 Example usage:
       
@@ -33,4 +33,10 @@ root@raspberrypi:/home/pi# jurek_control pump --turn-on 10  # in seconds
 root@raspberrypi:/home/pi# jurek_control heater --turn-on 1  # in minutes
  2013-11-19 14:27:14.478262 Turning heater on
  2013-11-19 14:28:14.484139 Turning heater off
+ 
+root@raspberrypi:/home/pi# ./jurek_control weather_station --read
+ Temperature: 26.0 C
+ Humidity:    34.0 %
+
+ 
 ```
