@@ -5,6 +5,7 @@ Usage:
   jurek_control heater (--turn-on <minutes> | --turn-off | --status)
   jurek_control pump (--turn-on <seconds> | --turn-off | --status)
   jurek_control feeder (--turn-on <seconds> | --turn-off | --status)
+  jurek_control weather_station (--read | --update-spreadsheet)
   jurek_control status
   jurek_control (-h | --help)
   jurek_control (--version)
@@ -14,6 +15,83 @@ Usage:
 from docopt import docopt
 import RPi.GPIO as GPIO
 import time, os, datetime
+
+
+import subprocess
+import re
+import sys
+import time
+import datetime
+import gspread
+import json
+
+class WeatherStation(object):
+    DATA_PIN = 4
+    GOOGLE_EMAIL = ''
+    GOOGLE_PASS  = ''
+    GOOGLE_SHEET = ''
+
+    def __init__(self):
+        self.setup()
+
+    def setup(self):
+        GPIO.cleanup()
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setup(self.DATA_PIN, GPIO.OUT)
+
+    def get_data(self):
+        output = subprocess.check_output(["./DHT11_driver/Adafruit_DHT", str(self.DATA_PIN)])
+        return json.loads(output)
+
+    def read_and_print(self, mode='median'):
+        if mode == 'fast':
+            temp, hum = self.read()
+        else:
+            temp, hum = self.median_read()
+
+        print "Temperature: %.1f C" % temp
+        print "Humidity:    %.1f %%" % hum
+
+    def read(self):
+        while True:
+            data = self.get_data()
+            if 'error' in data:
+                time.sleep(3)
+                continue
+            else:
+                temp = data['temp']
+                humidity = data['hum']
+                return temp, humidity
+
+    def median_read(self):
+        """ read 9 times and take the middle reading """
+        readings = [self.read() for x in xrange(0,9)]
+        return sorted(readings[len(readings)/2])
+
+
+    def write_to_google_docs_spreadsheet(self, temp, humidity):
+        # Login with Google account
+        try:
+            gc = gspread.login(self.GOOGLE_EMAIL, self.GOOGLE_PASS)
+        except:
+            print "Unable to log in.  Check your email address/password"
+            sys.exit()
+
+        # Open a worksheet from your spreadsheet using the filename
+        try:
+            worksheet = gc.open(self.GOOGLE_SHEET).sheet1
+        except:
+            print "Unable to open the spreadsheet.  Check your filename: %s" % self.GOOGLE_SHEET
+            sys.exit()
+
+        # Append the data in the spreadsheet, including a timestamp
+        try:
+            values = [datetime.datetime.now(), temp, humidity]
+            worksheet.append_row(values)
+        except:
+            print "Unable to append data.  Check your connection?"
+            sys.exit()
 
 
 class Pump(object):
@@ -143,6 +221,15 @@ if __name__ == "__main__":
             heater.turn_on(minutes=int(args['<minutes>']))
         if args['--turn-off'] is True:
             heater.turn_off()
+
+    if args['weather_station'] is True:
+        station = WeatherStation()
+        if args['--read'] is True:
+            temp, humidity = station.read_and_print()
+        if args['--update-spreadsheet'] is True:
+            temp, humidity = station.median_read()
+            station.write_to_google_docs_spreadsheet(temp, humidity)
+
     if args['status'] is True:
         pump = Pump()
         pump.status()
@@ -152,4 +239,9 @@ if __name__ == "__main__":
 
         feeder = Feeder()
         feeder.status()
+        
+        station = WeatherStation()
+        station.read_and_print()
+
+
 
